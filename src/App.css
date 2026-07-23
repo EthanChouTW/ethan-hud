@@ -62,6 +62,14 @@ html, body, #root {
   color: var(--hud-dim);
 }
 
+.mock-indicator {
+  color: var(--hud-warn);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
 .device-indicator {
   color: var(--hud-fg);
 }
