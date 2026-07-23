@@ -21,6 +21,23 @@ export interface TasksData {
   totalToday: number;
 }
 
+export interface CalendarEvent {
+  title: string;
+  startTime: string;      // HH:MM format
+  endTime: string;        // HH:MM format
+  location?: string;
+  isNext: boolean;        // true for the next upcoming event
+  minutesUntil?: number;  // minutes until start (only for isNext)
+  conferenceUrl?: string;
+}
+
+export interface CalendarData {
+  events: CalendarEvent[];
+  currentTime: string;    // HH:MM
+  nextEventTitle?: string;
+  nextEventIn?: number;   // minutes
+}
+
 export interface FinanceData {
   jpyToTwd: number;        // e.g. 0.2234
   jpyToTwdPrev?: number;   // previous rate for delta display

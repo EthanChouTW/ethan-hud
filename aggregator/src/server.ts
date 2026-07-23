@@ -1,8 +1,10 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import { config } from './config.js';
 import type { AggregatorMessage } from './types.js';
+import type { Collector } from './collectors/types.js';
 import { createNotionCollector } from './collectors/notion.js';
 import { createExchangeRateCollector } from './collectors/exchange-rate.js';
+import { createCalendarCollector } from './collectors/calendar.js';
 
 const clients = new Set<WebSocket>();
 
@@ -36,7 +38,13 @@ wss.on('connection', (ws, req) => {
 });
 
 // Start collectors
-const collectors = [createNotionCollector(), createExchangeRateCollector()];
+const collectors: Collector[] = [createNotionCollector(), createExchangeRateCollector()];
+
+if (config.calendarEnabled) {
+  collectors.push(createCalendarCollector());
+} else {
+  console.log('[server] calendar collector disabled via CALENDAR_ENABLED=false');
+}
 
 for (const collector of collectors) {
   console.log(`[server] starting collector: ${collector.name}`);

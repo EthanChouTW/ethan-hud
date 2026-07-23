@@ -5,8 +5,28 @@
 - Node.js 22+
 - Even Hub app (手機)已加入 Beta group
 - aggregator `.env` 已設定 `NOTION_TOKEN`
+- (選用) Google Calendar：已執行 ADC 登入（見下方 Calendar 設定）
 
 ## 步驟
+
+### 0. Google Calendar 設定（首次）
+
+Calendar collector 使用 Application Default Credentials (ADC)，不需要額外的 API key。
+只需跑一次：
+
+```bash
+gcloud auth application-default login --scopes=https://www.googleapis.com/auth/calendar.readonly
+```
+
+瀏覽器會跳出 Google 登入，授權後憑證自動存在 `~/.config/gcloud/application_default_credentials.json`。
+
+`.env` 加上（預設已開啟，設 `false` 可關閉）：
+
+```
+CALENDAR_ENABLED=true
+```
+
+如果不需要日曆功能，設 `CALENDAR_ENABLED=false` 或不執行上面的 gcloud 指令即可，aggregator 會自動跳過。
 
 ### 1. 啟動 aggregator
 

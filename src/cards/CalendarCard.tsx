@@ -6,8 +6,8 @@ interface Props {
 }
 
 /**
- * Calendar card -- shows upcoming events.
- * The next event is highlighted.
+ * Calendar card -- shows next event countdown + today's schedule.
+ * Designed for G2 (576x288, green monochrome).
  */
 export function CalendarCard({ data }: Props) {
   if (!data) {
@@ -18,18 +18,50 @@ export function CalendarCard({ data }: Props) {
     );
   }
 
+  const hasNext = data.nextEventTitle && data.nextEventIn !== undefined;
+
+  // Show remaining events (from the next event onward), max 4
+  const nextIndex = data.events.findIndex((e) => e.isNext);
+  const remaining = nextIndex >= 0
+    ? data.events.slice(nextIndex)
+    : data.events;
+  const displayEvents = remaining.slice(0, 4);
+
   return (
     <Card title="CALENDAR">
-      <div className="card-time">{data.currentTime}</div>
-      {data.events.slice(0, 3).map((event, i) => (
-        <div key={i} className={`event-row ${event.isNext ? 'event-row--next' : ''}`}>
-          <span className="event-time">{event.time}</span>
-          <span className="event-title">{event.title}</span>
+      {/* Next event banner */}
+      {hasNext ? (
+        <div className="cal-next">
+          <span className="cal-next-label">NEXT:</span>
+          <span className="cal-next-title">{data.nextEventTitle}</span>
+          <span className="cal-next-countdown">in {data.nextEventIn} min</span>
         </div>
-      ))}
-      {data.events.length === 0 && (
-        <p className="card-placeholder">No upcoming events</p>
+      ) : (
+        <div className="cal-next cal-next--none">
+          No more events today
+        </div>
       )}
+
+      {/* Event list */}
+      <div className="cal-list">
+        {displayEvents.map((event, i) => (
+          <div
+            key={i}
+            className={`event-row ${event.isNext ? 'event-row--next' : ''}`}
+          >
+            <span className="event-time">
+              {event.startTime}
+            </span>
+            <span className="event-title">{event.title}</span>
+            {event.location && (
+              <span className="event-location">{event.location}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Current time footer */}
+      <div className="card-footnote">{data.currentTime}</div>
     </Card>
   );
 }

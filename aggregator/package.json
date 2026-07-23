@@ -9,13 +9,14 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "ws": "^8.18.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "google-auth-library": "^10.9.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "tsx": "^4.19.0",
-    "@types/ws": "^8.5.13",
     "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.0",
     "typescript": "~5.7.0"
   }
 }

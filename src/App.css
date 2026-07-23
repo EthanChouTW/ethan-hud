@@ -185,11 +185,55 @@ html, body, #root {
   margin-bottom: 6px;
 }
 
+.cal-next {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0 6px;
+  font-size: 16px;
+  border-bottom: 1px solid var(--hud-dim);
+  margin-bottom: 6px;
+}
+
+.cal-next--none {
+  color: var(--hud-dim);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.cal-next-label {
+  color: var(--hud-fg);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.cal-next-title {
+  color: var(--hud-fg);
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-next-countdown {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--hud-warn);
+  font-weight: bold;
+}
+
+.cal-list {
+  flex: 1;
+  overflow: hidden;
+}
+
 .event-row {
   display: flex;
   gap: 8px;
   padding: 2px 0;
   font-size: 13px;
+  color: var(--hud-dim);
 }
 
 .event-row--next {
@@ -203,6 +247,16 @@ html, body, #root {
 }
 
 .event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-location {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--hud-dim);
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
