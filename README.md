@@ -1,83 +1,119 @@
-# ethan-hud
+# Ethan HUD
 
-Personal HUD dashboard for the Even G2 smart glasses.
-A multi-card glance app showing operational metrics, calendar, tasks, monitoring, and finance data at a glance.
+Personal dashboard for the Even G2 smart glasses -- a multi-card glance app showing tasks, calendar, exchange rates, and more.
 
-## Architecture / 架構
+## Architecture
 
 ```
-Even G2 glasses (576x288, green mono, 16 grayscale)
-      |
-    BLE
-      |
-Even App (phone) -- WebView runs this app
-      |
-   WebSocket
-      |
-Mac mini aggregator (separate service, feeds data)
+GitHub API ──┐
+Notion API ──┤
+Calendar API ┼──> [Mac mini aggregator :9500] ──WebSocket──> [phone WebView] ──BLE──> [G2 glasses]
+Exchange API ┤         aggregator/                              src/            576x288 green mono
+Sheets API ──┘
 ```
 
-The app runs as an Even Hub WebView plugin on the phone.
-The glasses only render what the phone sends over BLE.
-A Mac mini aggregator (not included in this repo) pushes real-time data via WebSocket.
+- **Glasses**: 576x288 single-color green, 16 grayscale levels. Only renders.
+- **Phone**: Even App WebView runs this React app. Receives data via WebSocket.
+- **Mac mini**: Aggregator service polls APIs, aggregates, pushes via WebSocket.
+- **Navigation**: Touch bar scroll (on glasses) or arrow keys / mouse wheel (in browser).
 
-## Cards / 卡片
+## Cards
 
-| Card | Description | Status |
-|------|-------------|--------|
-| OPS LENS | AlleyPin operational overview (active patients, pending tasks, alerts) | Planned |
-| CALENDAR | Upcoming events from Google Calendar | Planned |
-| TASKS | Today's task list with completion progress | Planned |
-| MONITOR | Infrastructure/service health metrics | Planned |
-| FINANCE | Cash position, burn rate, runway | Planned |
+| Card | Data Source | Status |
+|------|------------|--------|
+| **TASKS** | Notion API (AlleyPin Eng Tasks DB) | Done |
+| **CALENDAR** | Google Calendar API (via ADC) | Done (needs `gcloud auth`) |
+| **FINANCE** | exchangerate-api.com (JPY/TWD) | Done |
+| **OPS LENS** | GitHub API (PR/CI/release train) | Planned -- needs token |
+| **MONITOR** | Mac mini scripts (tickets/ANA/IG) | Planned |
 
-## Tech Stack
-
-- React + TypeScript + Vite
-- Even Hub SDK (`@evenrealities/even_hub_sdk`)
-- WebSocket for aggregator connection
-- CSS tuned for 576x288 monochrome green display
-
-## Dev Setup / 開發設定
+## Quick Start
 
 ```bash
-# Install dependencies
+# 1. Install
 npm install
+cd aggregator && npm install && cd ..
 
-# Start dev server
-npm run dev
+# 2. Configure aggregator
+cp aggregator/.env.example aggregator/.env
+# Edit .env: fill NOTION_TOKEN, optionally CALENDAR_ENABLED
 
-# Build for production (output in dist/)
-npm run build
+# 3. Google Calendar setup (one-time)
+gcloud auth application-default login \
+  --scopes=https://www.googleapis.com/auth/calendar.readonly
+
+# 4. Run
+cd aggregator && npm run dev &    # aggregator on :9500
+npm run dev                        # frontend on :5173
+
+# 5. Open in browser
+open http://localhost:5173          # real data
+open http://localhost:5173?mock=true # mock demo mode
 ```
 
-Arrow keys navigate between cards in the browser.
-On the G2 glasses, the touch bar scroll navigates between cards.
+## Deploy to G2
 
-## Packaging for Even Hub
+See [DEPLOY.md](DEPLOY.md) for full steps. Summary:
 
 ```bash
-# Pack the built app into .ehpk
-npx @evenrealities/evenhub-cli pack app.json dist
+npm run qr      # QR sideload to glasses for testing
+npm run pack     # Package for Even Hub upload
+# Upload to hub.evenrealities.com -> Beta group -> publish
 ```
+
+## Mock Mode
+
+When the aggregator is not running, the app auto-fills with realistic sample data after 3 seconds. Force it with `?mock=true`. A `MOCK` label appears in the status bar.
 
 ## Project Structure
 
 ```
 src/
-  cards/          -- Card components (one per dashboard screen)
-    Card.tsx      -- Base card wrapper
-    OpsLensCard.tsx
-    CalendarCard.tsx
-    TasksCard.tsx
-    MonitorCard.tsx
-    FinanceCard.tsx
+  cards/              Card components (one per dashboard screen)
+    Card.tsx           Base card wrapper
+    OpsLensCard.tsx    PR / CI / release train (planned)
+    CalendarCard.tsx   Today's events + next event countdown
+    TasksCard.tsx      Notion tasks with deadline + priority
+    MonitorCard.tsx    Infrastructure health (planned)
+    FinanceCard.tsx    JPY/TWD exchange rate + delta
   hooks/
-    useBridge.ts  -- Even Hub SDK bridge lifecycle
-    useWebSocket.ts -- Mac mini aggregator WebSocket connection
+    useBridge.ts       Even Hub SDK bridge + touch bar events
+    useWebSocket.ts    WebSocket to aggregator (auto-reconnect)
+  mock/
+    data.ts            Realistic sample data for all cards
   types/
-    dashboard.ts  -- Data types for aggregator messages
-  App.tsx         -- Main layout with horizontal card scroll
-  App.css         -- G2-optimized monochrome green styles
-app.json          -- Even Hub app manifest
+    dashboard.ts       Shared data types
+  App.tsx              Main layout, card scroll, mock mode logic
+  App.css              G2-optimized monochrome green styles
+
+aggregator/
+  src/
+    server.ts          WebSocket server (:9500)
+    config.ts          Environment config (.env)
+    types.ts           Shared types (mirrors frontend)
+    collectors/
+      types.ts         Collector interface
+      notion.ts        Notion Tasks DB polling (60s)
+      calendar.ts      Google Calendar via ADC (5min)
+      exchange-rate.ts Free JPY/TWD rate API (30min)
+
+app.json               Even Hub manifest
+DEPLOY.md              Deployment guide (Traditional Chinese)
 ```
+
+## Tech Stack
+
+- React 19 + TypeScript + Vite
+- Even Hub SDK (`@evenrealities/even_hub_sdk`)
+- Node.js aggregator with `ws` library
+- `google-auth-library` for Calendar ADC
+- CSS tuned for 576x288 monochrome green display
+
+## Adding a New Card
+
+1. Create collector in `aggregator/src/collectors/`
+2. Add message type to `aggregator/src/types.ts` + `src/types/dashboard.ts`
+3. Register collector in `aggregator/src/server.ts`
+4. Create card component in `src/cards/`
+5. Wire up in `App.tsx` (state + switch case + render)
+6. Add mock data in `src/mock/data.ts`
