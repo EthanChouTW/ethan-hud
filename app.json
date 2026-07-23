@@ -1,0 +1,23 @@
+{
+  "package_id": "com.ethanchou.ethan-hud",
+  "edition": "202601",
+  "name": "Ethan HUD",
+  "version": "0.1.0",
+  "min_app_version": "2.0.0",
+  "min_sdk_version": "0.0.12",
+  "entrypoint": "index.html",
+  "permissions": [
+    {
+      "name": "network",
+      "desc": "Connect to Mac mini aggregator via WebSocket for real-time dashboard data",
+      "whitelist": [
+        "ws://ethan-mac-mini.local:8080",
+        "wss://ethan-mac-mini.local:8080"
+      ]
+    }
+  ],
+  "supported_languages": [
+    "en",
+    "zh-TW"
+  ]
+}

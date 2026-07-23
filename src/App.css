@@ -1,0 +1,262 @@
+/*
+ * Ethan HUD -- Even G2 dashboard styles
+ *
+ * Target display: 576x288 px, single-color green, 16 grayscale levels.
+ * All styling uses a monochrome green palette to match the glasses output.
+ * Font sizes are tuned for the small viewport.
+ */
+
+:root {
+  --hud-bg: #000000;
+  --hud-fg: #00ff41;
+  --hud-dim: #006b1a;
+  --hud-warn: #ccff00;
+  --hud-error: #ff3333;
+  --hud-font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --viewport-w: 576px;
+  --viewport-h: 288px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: var(--viewport-w);
+  height: var(--viewport-h);
+  overflow: hidden;
+  background: var(--hud-bg);
+  color: var(--hud-fg);
+  font-family: var(--hud-font);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+/* --- Status bar --- */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  height: 20px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--hud-dim);
+}
+
+.ws-indicator {
+  font-weight: bold;
+}
+
+.ws-indicator--connected {
+  color: var(--hud-fg);
+}
+
+.ws-indicator--connecting {
+  color: var(--hud-warn);
+}
+
+.ws-indicator--disconnected {
+  color: var(--hud-dim);
+}
+
+.device-indicator {
+  color: var(--hud-fg);
+}
+
+.card-dots {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  color: var(--hud-dim);
+  font-size: 10px;
+}
+
+.dot--active {
+  color: var(--hud-fg);
+  font-weight: bold;
+}
+
+/* --- Card viewport (horizontal scroll) --- */
+
+.card-viewport {
+  display: flex;
+  width: calc(var(--viewport-w) * 5);
+  height: calc(var(--viewport-h) - 20px);
+  transition: transform 0.25s ease-out;
+}
+
+.card {
+  width: var(--viewport-w);
+  height: calc(var(--viewport-h) - 20px);
+  flex-shrink: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hud-dim);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.card-status {
+  font-size: 11px;
+}
+
+.card-status--ok {
+  color: var(--hud-fg);
+}
+
+.card-status--warn {
+  color: var(--hud-warn);
+}
+
+.card-status--error {
+  color: var(--hud-error);
+}
+
+.card-status--offline {
+  color: var(--hud-dim);
+}
+
+.card-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.card-placeholder {
+  color: var(--hud-dim);
+  font-style: italic;
+  font-size: 13px;
+  padding-top: 16px;
+  text-align: center;
+}
+
+/* --- Metric rows --- */
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 14px;
+}
+
+.metric-label {
+  color: var(--hud-dim);
+}
+
+.metric-value {
+  font-weight: bold;
+}
+
+.metric-value--ok {
+  color: var(--hud-fg);
+}
+
+.metric-value--warn {
+  color: var(--hud-warn);
+}
+
+.metric-value--critical {
+  color: var(--hud-error);
+}
+
+/* --- Calendar events --- */
+
+.card-time {
+  font-size: 12px;
+  color: var(--hud-dim);
+  margin-bottom: 6px;
+}
+
+.event-row {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 13px;
+}
+
+.event-row--next {
+  color: var(--hud-fg);
+  font-weight: bold;
+}
+
+.event-time {
+  flex-shrink: 0;
+  width: 50px;
+}
+
+.event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Task rows --- */
+
+.task-row {
+  display: flex;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 13px;
+}
+
+.task-row--done {
+  color: var(--hud-dim);
+  text-decoration: line-through;
+}
+
+.task-check {
+  flex-shrink: 0;
+  width: 24px;
+}
+
+.task-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-priority {
+  color: var(--hud-warn);
+  font-weight: bold;
+  margin-left: auto;
+}
+
+/* --- Finance --- */
+
+.card-footnote {
+  margin-top: auto;
+  font-size: 10px;
+  color: var(--hud-dim);
+  text-align: right;
+}
+
+/* --- Alert banner --- */
+
+.card-alert {
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--hud-warn);
+  color: var(--hud-warn);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
