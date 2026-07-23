@@ -2,6 +2,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { config } from './config.js';
 import type { AggregatorMessage } from './types.js';
 import { createNotionCollector } from './collectors/notion.js';
+import { createExchangeRateCollector } from './collectors/exchange-rate.js';
 
 const clients = new Set<WebSocket>();
 
@@ -35,7 +36,7 @@ wss.on('connection', (ws, req) => {
 });
 
 // Start collectors
-const collectors = [createNotionCollector()];
+const collectors = [createNotionCollector(), createExchangeRateCollector()];
 
 for (const collector of collectors) {
   console.log(`[server] starting collector: ${collector.name}`);

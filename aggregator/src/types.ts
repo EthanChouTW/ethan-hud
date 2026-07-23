@@ -21,6 +21,16 @@ export interface TasksData {
   totalToday: number;
 }
 
+export interface FinanceData {
+  jpyToTwd: number;        // e.g. 0.2234
+  jpyToTwdPrev?: number;   // previous rate for delta display
+  rateUpdatedAt: string;   // ISO timestamp
+  cashPosition?: string;   // future: from Sheets
+  burnRate?: string;       // future: from Sheets
+  runway?: string;         // future: from Sheets
+  lastUpdated: string;
+}
+
 export interface AggregatorMessage {
   type: 'ops' | 'calendar' | 'tasks' | 'monitor' | 'finance';
   data: unknown;

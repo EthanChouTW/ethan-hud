@@ -52,9 +52,12 @@ export interface MonitorData {
 }
 
 export interface FinanceData {
-  cashPosition: string;
-  burnRate: string;
-  runway: string;
+  jpyToTwd: number;        // e.g. 0.2234
+  jpyToTwdPrev?: number;   // previous rate for delta display
+  rateUpdatedAt: string;   // ISO timestamp
+  cashPosition?: string;   // future: from Sheets
+  burnRate?: string;       // future: from Sheets
+  runway?: string;         // future: from Sheets
   lastUpdated: string;
 }
 

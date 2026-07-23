@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack": "npx @evenrealities/evenhub-cli pack",
+    "qr": "npx @evenrealities/evenhub-cli qr --url http://$(hostname -I 2>/dev/null || ipconfig getifaddr en0):5173",
+    "deploy:dev": "npm run dev"
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.12",

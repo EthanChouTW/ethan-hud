@@ -9,10 +9,14 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Connect to Mac mini aggregator via WebSocket for real-time dashboard data",
+      "desc": "Connect to aggregator service for real-time dashboard data",
       "whitelist": [
-        "ws://ethan-mac-mini.local:8080",
-        "wss://ethan-mac-mini.local:8080"
+        "ws://localhost:9500",
+        "wss://localhost:9500",
+        "ws://ethan-mac-mini.local:9500",
+        "wss://ethan-mac-mini.local:9500",
+        "ws://*.tail*.ts.net:9500",
+        "wss://*.tail*.ts.net:9500"
       ]
     }
   ],
