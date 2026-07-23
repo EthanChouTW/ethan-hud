@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { AggregatorMessage } from '../types/dashboard';
 
-const DEFAULT_WS_URL = 'ws://ethan-mac-mini.local:8080';
+const DEFAULT_WS_URL = 'ws://localhost:9500';
 const RECONNECT_INTERVAL_MS = 5000;
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';

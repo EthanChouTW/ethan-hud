@@ -29,6 +29,9 @@ export interface TaskItem {
   title: string;
   priority: 'high' | 'medium' | 'low';
   done: boolean;
+  deadline?: string;
+  status?: string;
+  tags?: string[];
 }
 
 export interface TasksData {

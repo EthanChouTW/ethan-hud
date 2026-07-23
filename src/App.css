@@ -233,6 +233,18 @@ html, body, #root {
   white-space: nowrap;
 }
 
+.task-deadline {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--hud-dim);
+}
+
+.task-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--hud-dim);
+}
+
 .task-priority {
   color: var(--hud-warn);
   font-weight: bold;
