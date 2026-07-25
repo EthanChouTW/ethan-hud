@@ -60,15 +60,25 @@ npm run qr
 ### 4. 打包
 
 ```bash
-npm run build
 npm run pack
 ```
 
-產出 `.evenhub` 檔案在專案根目錄。
+會先 `npm run build` 再打包，產出 `ethan-hud.ehpk`（約 93 KB）在專案根目錄。
+
+打包版跟 QR sideload 版有個關鍵差異：packed app 從本機 bundle 載入，
+沒辦法從自己的網址推導出 Mac 在哪，所以 aggregator 位址必須在 build 時
+寫死。這個值在 `.env.production` 的 `VITE_WS_URL`，目前指向 Tailscale IP。
+
+Tailscale IP 變動時要更新：
+
+```bash
+tailscale ip -4    # 確認目前位址
+# 更新 .env.production 的 VITE_WS_URL，再重新 npm run pack
+```
 
 ### 5. 上傳到 Even Hub Portal
 
-1. 登入 [Even Hub Developer Portal](https://developer.evenrealities.com)
-2. 上傳 `.evenhub` 檔案
-3. 發布到 Beta group
-4. 手機 Even Hub app 更新後即可使用
+Portal 在 <https://hub.evenrealities.com>（CLI 也用這個 base URL）。
+上傳 `ethan-hud.ehpk` 後發布到 Beta group — Beta 是自用範圍，不需人工審核。
+
+CLI 有 `evenhub login`，但沒有 upload/publish 指令，發布走網頁介面。

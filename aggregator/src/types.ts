@@ -13,6 +13,7 @@ export interface TaskItem {
   deadline?: string;
   status?: string;
   tags?: string[];
+  dayLabel?: string;
 }
 
 export interface TasksData {
@@ -29,6 +30,9 @@ export interface CalendarEvent {
   isNext: boolean;        // true for the next upcoming event
   minutesUntil?: number;  // minutes until start (only for isNext)
   conferenceUrl?: string;
+  description?: string;
+  /** 'today' | 'tomorrow' -- the range spans two days. */
+  dayLabel?: string;
 }
 
 export interface CalendarData {
@@ -48,8 +52,17 @@ export interface FinanceData {
   lastUpdated: string;
 }
 
+export interface TaskDetail {
+  id: string;
+  title: string;
+  status?: string;
+  deadline?: string;
+  /** Plain-text lines from the Notion page body. */
+  content: string[];
+}
+
 export interface AggregatorMessage {
-  type: 'ops' | 'calendar' | 'tasks' | 'monitor' | 'finance';
+  type: 'ops' | 'calendar' | 'tasks' | 'monitor' | 'finance' | 'taskDetail';
   data: unknown;
   timestamp: number;
 }

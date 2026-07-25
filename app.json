@@ -1,8 +1,8 @@
 {
-  "package_id": "com.ethanchou.ethan-hud",
+  "package_id": "com.ethanchou.ethanhud",
   "edition": "202601",
   "name": "Ethan HUD",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.12",
   "entrypoint": "index.html",
@@ -13,6 +13,10 @@
       "whitelist": [
         "ws://localhost:9500",
         "wss://localhost:9500",
+        "ws://100.100.184.64:9500",
+        "ws://192.168.*.*:9500",
+        "ws://10.*.*.*:9500",
+        "ws://100.*.*.*:9500",
         "ws://ethan-mac-mini.local:9500",
         "wss://ethan-mac-mini.local:9500",
         "ws://*.tail*.ts.net:9500",
@@ -22,6 +26,6 @@
   ],
   "supported_languages": [
     "en",
-    "zh-TW"
+    "zh"
   ]
 }

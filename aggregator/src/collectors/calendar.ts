@@ -4,13 +4,18 @@ import type { AggregatorMessage, CalendarEvent, CalendarData } from '../types.js
 
 const POLL_INTERVAL_MS = 300_000; // 5 minutes
 const TIMEZONE = 'Asia/Tokyo';
-const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3/calendars';
+const CALENDAR_IDS = [
+  'primary',
+  'ethanchoudev@gmail.com',
+];
 
 interface GoogleCalendarEvent {
   summary?: string;
   start?: { dateTime?: string; date?: string };
   end?: { dateTime?: string; date?: string };
   location?: string;
+  description?: string;
   conferenceData?: {
     entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
   };
@@ -28,8 +33,7 @@ export function createCalendarCollector(): Collector {
   let lastPayloadJson = '';
   let authClient: GoogleAuth | undefined;
 
-  function getTodayBounds(): { timeMin: string; timeMax: string } {
-    // Get start and end of today in Asia/Tokyo
+  function getTwoDayBounds(): { timeMin: string; timeMax: string } {
     const now = new Date();
     const tokyoDate = new Date(
       now.toLocaleString('en-US', { timeZone: TIMEZONE })
@@ -38,8 +42,14 @@ export function createCalendarCollector(): Collector {
     const month = String(tokyoDate.getMonth() + 1).padStart(2, '0');
     const day = String(tokyoDate.getDate()).padStart(2, '0');
 
+    const tomorrow = new Date(tokyoDate);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tYear = tomorrow.getFullYear();
+    const tMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const tDay = String(tomorrow.getDate()).padStart(2, '0');
+
     const timeMin = `${year}-${month}-${day}T00:00:00+09:00`;
-    const timeMax = `${year}-${month}-${day}T23:59:59+09:00`;
+    const timeMax = `${tYear}-${tMonth}-${tDay}T23:59:59+09:00`;
 
     return { timeMin, timeMax };
   }
@@ -85,7 +95,7 @@ export function createCalendarCollector(): Collector {
       throw new Error('Failed to obtain access token from ADC');
     }
 
-    const { timeMin, timeMax } = getTodayBounds();
+    const { timeMin, timeMax } = getTwoDayBounds();
     const params = new URLSearchParams({
       timeMin,
       timeMax,
@@ -95,22 +105,30 @@ export function createCalendarCollector(): Collector {
       timeZone: TIMEZONE,
     });
 
-    const response = await fetch(`${CALENDAR_API}?${params}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Google Calendar API error: ${response.status} ${response.statusText}`);
+    const allItems: GoogleCalendarEvent[] = [];
+    for (const calId of CALENDAR_IDS) {
+      const url = `${CALENDAR_API_BASE}/${encodeURIComponent(calId)}/events?${params}`;
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) {
+        console.warn(`[calendar] failed to fetch ${calId}: ${response.status}`);
+        continue;
+      }
+      const body = (await response.json()) as GoogleCalendarResponse;
+      allItems.push(...(body.items ?? []));
     }
 
-    const body = (await response.json()) as GoogleCalendarResponse;
+    allItems.sort((a, b) => {
+      const aStart = a.start?.dateTime ?? a.start?.date ?? '';
+      const bStart = b.start?.dateTime ?? b.start?.date ?? '';
+      return aStart.localeCompare(bStart);
+    });
+
     const now = new Date();
 
-    // Find the next upcoming event
     let nextIndex = -1;
-    const rawItems = body.items ?? [];
+    const rawItems = allItems;
 
     for (let i = 0; i < rawItems.length; i++) {
       const item = rawItems[i];
@@ -135,6 +153,11 @@ export function createCalendarCollector(): Collector {
         if (minutesUntil < 0) minutesUntil = 0;
       }
 
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+      const eventDay = startStr
+        ? new Date(startStr).toLocaleDateString('en-CA', { timeZone: TIMEZONE })
+        : undefined;
+
       return {
         title: item.summary ?? '(no title)',
         startTime: startStr ? formatTime(startStr) : '--:--',
@@ -143,6 +166,12 @@ export function createCalendarCollector(): Collector {
         isNext,
         minutesUntil,
         conferenceUrl: getConferenceUrl(item),
+        // Google returns description as HTML; the glasses render plain text
+        // only, so tags are stripped rather than shown as literal markup.
+        description: item.description
+          ? item.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          : undefined,
+        dayLabel: eventDay === today ? 'today' : eventDay ? 'tomorrow' : undefined,
       };
     });
 

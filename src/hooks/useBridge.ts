@@ -19,88 +19,105 @@ interface BridgeState {
   launchSource: LaunchSource | null;
 }
 
+interface BridgeHandlers {
+  /** Card switch. On glasses this is double-tap; in the browser, arrow keys. */
+  onNavigate?: (direction: 'left' | 'right') => void;
+  /** Act on the selected row. */
+  onTap?: () => void;
+  /** Absolute row selection, reported by the native list container. */
+  onSelect?: (index: number) => void;
+  /** Relative selection move, from a raw scroll event. */
+  onScroll?: (delta: 1 | -1) => void;
+  /** Last raw event, for on-glasses diagnostics. */
+  onRawEvent?: (label: string) => void;
+}
+
 /**
  * React hook wrapping the Even Hub SDK bridge lifecycle.
  *
- * - Awaits bridge readiness
- * - Subscribes to device status + launch source
- * - Subscribes to EvenHub events for G2 touch bar navigation
- * - Exposes connection/battery state for HUD status bar
- *
- * @param onNavigate  optional callback for touch-bar scroll (left/right)
- * @param onTap       optional callback for single tap
- * @param onDoubleTap optional callback for double tap
+ * Event model on the glasses: the list container is created with
+ * `isEventCapture: 1`, so the temple scroll drives native row selection and
+ * reaches us as `listEvent` rather than as a scroll we handle ourselves. That
+ * leaves tap for "act on selection" and double-tap for "next card".
  */
-export function useBridge(
-  onNavigate?: (direction: 'left' | 'right') => void,
-  onTap?: () => void,
-  onDoubleTap?: () => void,
-): BridgeState {
+export function useBridge(handlers: BridgeHandlers = {}): BridgeState {
   const [bridge, setBridge] = useState<EvenAppBridge | null>(null);
   const [ready, setReady] = useState(false);
   const [deviceConnected, setDeviceConnected] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState<number | undefined>();
   const [launchSource, setLaunchSource] = useState<LaunchSource | null>(null);
 
-  // Stable refs so the EvenHub callback always sees the latest handler
-  const navigateRef = useRef(onNavigate);
-  navigateRef.current = onNavigate;
-  const tapRef = useRef(onTap);
-  tapRef.current = onTap;
-  const doubleTapRef = useRef(onDoubleTap);
-  doubleTapRef.current = onDoubleTap;
+  // Stable ref so the EvenHub callback always sees the latest handlers
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
 
-  // Debounce guard for rapid scroll events
-  const lastScrollRef = useRef(0);
+  const lastTouchRef = useRef(0);
+  const lastIndexRef = useRef<number | undefined>(undefined);
+  const eventSeqRef = useRef(0);
 
   const handleEvenHubEvent = useCallback((event: EvenHubEvent) => {
-    // Touch bar events arrive as sysEvent (from glasses temple) or
-    // listEvent (scroll within an OS list container). We handle both.
+    const h = handlersRef.current;
+    const listEvt = event.listEvent;
     const sysEvt = event.sysEvent;
-    if (sysEvt?.eventType !== undefined) {
-      const now = Date.now();
 
-      switch (sysEvt.eventType) {
-        case OsEventTypeList.SCROLL_BOTTOM_EVENT:
-          // Scroll forward -> next card
-          if (now - lastScrollRef.current >= TOUCH_DEBOUNCE_MS) {
-            lastScrollRef.current = now;
-            navigateRef.current?.('right');
-          }
-          break;
-        case OsEventTypeList.SCROLL_TOP_EVENT:
-          // Scroll backward -> previous card
-          if (now - lastScrollRef.current >= TOUCH_DEBOUNCE_MS) {
-            lastScrollRef.current = now;
-            navigateRef.current?.('left');
-          }
-          break;
-        case OsEventTypeList.CLICK_EVENT:
-          tapRef.current?.();
-          break;
-        case OsEventTypeList.DOUBLE_CLICK_EVENT:
-          doubleTapRef.current?.();
-          break;
+    const eventType = listEvt?.eventType ?? sysEvt?.eventType;
+    const index = listEvt?.currentSelectItemIndex;
+
+    // Report before any filtering, so an event dropped by the debounce -- or
+    // carrying a code we do not handle -- is still visible rather than
+    // looking like nothing arrived. The sequence number makes repeats of an
+    // identical event distinguishable on the display.
+    eventSeqRef.current += 1;
+    h.onRawEvent?.(
+      [
+        `#${eventSeqRef.current % 100}`,
+        listEvt?.eventType !== undefined ? `L${listEvt.eventType}` : '',
+        sysEvt?.eventType !== undefined ? `S${sysEvt.eventType}` : '',
+        index !== undefined ? `i${index}` : '',
+        listEvt && listEvt.eventType === undefined && index === undefined ? 'bare' : '',
+      ].filter(Boolean).join(''),
+    );
+
+    const now = Date.now();
+    if (now - lastTouchRef.current < TOUCH_DEBOUNCE_MS) return;
+
+    // Observed on the G2: the list reports a tap with no eventType at all --
+    // just a selection payload. A tap on an already-selected row carries no
+    // index either. So the event type cannot be what distinguishes tap from
+    // scroll; the index moving is.
+    //
+    // Index changed  -> the temple scrolled, move the selection.
+    // Index same/absent -> the row was activated, treat as a tap.
+    if (eventType === undefined) {
+      if (!listEvt) return;
+      lastTouchRef.current = now;
+
+      if (index !== undefined && index !== lastIndexRef.current) {
+        lastIndexRef.current = index;
+        h.onSelect?.(index);
+      } else {
+        h.onTap?.();
       }
+      return;
     }
 
-    // List scroll events (from OS list containers) can also navigate
-    const listEvt = event.listEvent;
-    if (listEvt?.eventType !== undefined) {
-      const now = Date.now();
-      if (
-        listEvt.eventType === OsEventTypeList.SCROLL_BOTTOM_EVENT &&
-        now - lastScrollRef.current >= TOUCH_DEBOUNCE_MS
-      ) {
-        lastScrollRef.current = now;
-        navigateRef.current?.('right');
-      } else if (
-        listEvt.eventType === OsEventTypeList.SCROLL_TOP_EVENT &&
-        now - lastScrollRef.current >= TOUCH_DEBOUNCE_MS
-      ) {
-        lastScrollRef.current = now;
-        navigateRef.current?.('left');
-      }
+    lastTouchRef.current = now;
+
+    switch (eventType) {
+      case OsEventTypeList.CLICK_EVENT:
+        h.onTap?.();
+        break;
+      case OsEventTypeList.DOUBLE_CLICK_EVENT:
+        h.onNavigate?.('right');
+        break;
+      case OsEventTypeList.SCROLL_BOTTOM_EVENT:
+        if (index === undefined) h.onScroll?.(1);
+        else { lastIndexRef.current = index; h.onSelect?.(index); }
+        break;
+      case OsEventTypeList.SCROLL_TOP_EVENT:
+        if (index === undefined) h.onScroll?.(-1);
+        else { lastIndexRef.current = index; h.onSelect?.(index); }
+        break;
     }
   }, []);
 
@@ -136,19 +153,17 @@ export function useBridge(
     };
   }, [handleEvenHubEvent]);
 
-  // Fallback: browser wheel/touch events for dev and WebView passthrough.
-  // The G2 WebView may translate temple scrolls into standard wheel events.
+  // Browser dev fallback: mouse wheel switches cards.
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
       const now = Date.now();
-      if (now - lastScrollRef.current < TOUCH_DEBOUNCE_MS) return;
-      lastScrollRef.current = now;
+      if (now - lastTouchRef.current < TOUCH_DEBOUNCE_MS) return;
+      lastTouchRef.current = now;
 
-      // deltaY > 0 = scroll down = next card
       if (e.deltaY > 0 || e.deltaX > 0) {
-        navigateRef.current?.('right');
+        handlersRef.current.onNavigate?.('right');
       } else if (e.deltaY < 0 || e.deltaX < 0) {
-        navigateRef.current?.('left');
+        handlersRef.current.onNavigate?.('left');
       }
     };
 

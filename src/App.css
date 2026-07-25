@@ -94,7 +94,7 @@ html, body, #root {
 
 .card-viewport {
   display: flex;
-  width: calc(var(--viewport-w) * 5);
+  width: calc(var(--viewport-w) * 3);
   height: calc(var(--viewport-h) - 20px);
   transition: transform 0.25s ease-out;
 }
@@ -307,10 +307,73 @@ html, body, #root {
   color: var(--hud-dim);
 }
 
+.task-row--selected {
+  background: var(--hud-dim);
+  outline: 1px solid var(--hud-fg);
+}
+
+.task-row--overdue .task-day-label {
+  color: var(--hud-warn);
+}
+
+.task-day-label {
+  flex-shrink: 0;
+  width: 36px;
+  font-size: 11px;
+  color: var(--hud-dim);
+}
+
 .task-priority {
   color: var(--hud-warn);
   font-weight: bold;
   margin-left: auto;
+}
+
+.task-hint {
+  margin-top: auto;
+  font-size: 10px;
+  color: var(--hud-dim);
+  text-align: center;
+  padding-top: 4px;
+}
+
+/* --- Task detail --- */
+
+.detail-title {
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.detail-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--hud-dim);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hud-dim);
+  margin-bottom: 4px;
+}
+
+.detail-content {
+  flex: 1;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.detail-line {
+  padding: 1px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-empty {
+  flex: 1;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--hud-dim);
 }
 
 /* --- Finance --- */

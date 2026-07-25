@@ -3,13 +3,14 @@ import type { CalendarData } from '../types/dashboard';
 
 interface Props {
   data: CalendarData | null;
+  selectedIndex?: number;
 }
 
 /**
  * Calendar card -- shows next event countdown + today's schedule.
  * Designed for G2 (576x288, green monochrome).
  */
-export function CalendarCard({ data }: Props) {
+export function CalendarCard({ data, selectedIndex }: Props) {
   if (!data) {
     return (
       <Card title="CALENDAR" status="offline">
@@ -20,12 +21,10 @@ export function CalendarCard({ data }: Props) {
 
   const hasNext = data.nextEventTitle && data.nextEventIn !== undefined;
 
-  // Show remaining events (from the next event onward), max 4
-  const nextIndex = data.events.findIndex((e) => e.isNext);
-  const remaining = nextIndex >= 0
-    ? data.events.slice(nextIndex)
-    : data.events;
-  const displayEvents = remaining.slice(0, 4);
+  // The glasses list is indexed over the full event array, so this must be
+  // too -- slicing to "upcoming only" would make the selection index point at
+  // a different row here than on the device.
+  const displayEvents = data.events.slice(0, 5);
 
   return (
     <Card title="CALENDAR">
@@ -38,7 +37,7 @@ export function CalendarCard({ data }: Props) {
         </div>
       ) : (
         <div className="cal-next cal-next--none">
-          No more events today
+          No upcoming events
         </div>
       )}
 
@@ -47,10 +46,14 @@ export function CalendarCard({ data }: Props) {
         {displayEvents.map((event, i) => (
           <div
             key={i}
-            className={`event-row ${event.isNext ? 'event-row--next' : ''}`}
+            className={[
+              'event-row',
+              event.isNext ? 'event-row--next' : '',
+              i === selectedIndex ? 'task-row--selected' : '',
+            ].filter(Boolean).join(' ')}
           >
             <span className="event-time">
-              {event.startTime}
+              {event.dayLabel === 'tomorrow' ? '+1 ' : ''}{event.startTime}
             </span>
             <span className="event-title">{event.title}</span>
             {event.location && (

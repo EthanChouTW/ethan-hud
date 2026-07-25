@@ -1,15 +1,16 @@
 {
   "name": "ethan-hud",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "pack": "npx @evenrealities/evenhub-cli pack",
+    "pack": "npm run build && npx @evenrealities/evenhub-cli pack app.json dist -o ethan-hud.ehpk",
     "qr": "npx @evenrealities/evenhub-cli qr --url http://$(hostname -I 2>/dev/null || ipconfig getifaddr en0):5173",
+    "qr:ts": "npx @evenrealities/evenhub-cli qr --url http://$(tailscale ip -4 | head -1):5173",
     "deploy:dev": "npm run dev",
     "dev:mock": "vite --open '/?mock=true'"
   },

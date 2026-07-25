@@ -7,9 +7,11 @@ import { createExchangeRateCollector } from './collectors/exchange-rate.js';
 import { createCalendarCollector } from './collectors/calendar.js';
 
 const clients = new Set<WebSocket>();
+const latestByType = new Map<string, string>();
 
 function broadcast(msg: AggregatorMessage): void {
   const payload = JSON.stringify(msg);
+  latestByType.set(msg.type, payload);
   for (const client of clients) {
     if (client.readyState === client.OPEN) {
       client.send(payload);
@@ -25,6 +27,22 @@ wss.on('connection', (ws, req) => {
   const addr = req.socket.remoteAddress ?? 'unknown';
   console.log(`[server] client connected from ${addr}`);
   clients.add(ws);
+
+  for (const payload of latestByType.values()) {
+    ws.send(payload);
+  }
+
+  ws.on('message', async (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString()) as { collector: string; action: string; payload: Record<string, unknown> };
+      const collector = collectors.find((c) => c.name === msg.collector);
+      if (collector?.handleAction) {
+        await collector.handleAction(msg.action, msg.payload);
+      }
+    } catch (err) {
+      console.error('[server] upstream message error:', err instanceof Error ? err.message : err);
+    }
+  });
 
   ws.on('close', () => {
     console.log(`[server] client disconnected from ${addr}`);
